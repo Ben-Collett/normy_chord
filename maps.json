@@ -1,4 +1,11 @@
 {
+  "fu": "MAKE_FUNCTION_PLZ",
+  "cl": "DECLARE_CLASS_PLZ",
+  "pr": "PRINT_PLZ",
   "he": "hello",
-  "th": "there"
+  "th": "there",
+  "la": "late",
+  "fl": "final",
+  "vl": "value",
+  "si": "is"
 }

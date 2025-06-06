@@ -7,6 +7,8 @@ import time
 import threading
 import argparse
 import chord_parse
+from action_types import WriteAction, TypeAction, ActionList
+from config_utils import load_library
 
 
 def kill_after_delay(delay):
@@ -39,9 +41,13 @@ output_keyboard = evdev.UInput(name='chording writing keyboard')
 keyboard = EvKeyBoard(hardware_keyboard)
 
 
-print(f'loading library {config.chord_library_path}')
-chords = chord_parse.parse_library_flat_json(config.chord_library_path)
-print(f'loaded library {config.chord_library_path}')
+print('parsing cords')
+if config.chords:
+    chords = chord_parse.json_to_chords(config.chords)
+else:
+    chords = load_library(config.chord_library_path)
+    chords = chord_parse.parse_library_flat_json(chords)
+print('finished parsing chords')
 
 
 def exit_condition():
@@ -51,13 +57,27 @@ def exit_condition():
         exit()
 
 
+def _handle_actions(actions: ActionList):
+    for action in actions:
+        if isinstance(action, WriteAction):
+            keyboard.write(action.data)
+        elif isinstance(action, TypeAction):
+            keyboard.type_key_codes(action.key_codes)
+
+
 try:
     while True:
         keys_snapshot = keyboard.get_down_letters()
         if keys_snapshot in chords:
             chord = chords[keys_snapshot]
-            keyboard.backspace(x_times=len(keys_snapshot))
-            keyboard.write(chord+config.separator)
+            time.sleep(config.chord_detection_delay)
+            key_snapshot2 = keyboard.get_down_letters()
+            if key_snapshot2 == keys_snapshot:
+                keyboard.backspace(x_times=len(keys_snapshot))
+                if type(chord) is str:
+                    keyboard.write(chord+config.separator)
+                else:
+                    _handle_actions(chord)
         if exit_condition():
             exit(0)
 

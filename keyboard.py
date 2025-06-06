@@ -15,6 +15,7 @@ _modifiers = {
     _ecodes.KEY_RIGHTMETA,
     _ecodes.KEY_FN  # might not be on all keyboards
 }
+_uppercase = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_")
 _char_to_key = {
     'a': _ecodes.KEY_A, 'b': _ecodes.KEY_B, 'c': _ecodes.KEY_C, 'd': _ecodes.KEY_D,
     'e': _ecodes.KEY_E, 'f': _ecodes.KEY_F, 'g': _ecodes.KEY_G, 'h': _ecodes.KEY_H,
@@ -25,7 +26,7 @@ _char_to_key = {
     'y': _ecodes.KEY_Y, 'z': _ecodes.KEY_Z,
     '0': _ecodes.KEY_0, '1': _ecodes.KEY_1, '2': _ecodes.KEY_2, '3': _ecodes.KEY_3,
     '4': _ecodes.KEY_4, '5': _ecodes.KEY_5, '6': _ecodes.KEY_6, '7': _ecodes.KEY_7,
-    '8': _ecodes.KEY_8, '9': _ecodes.KEY_9,
+    '8': _ecodes.KEY_8, '9': _ecodes.KEY_9, '_': _ecodes.KEY_MINUS,
     ' ': _ecodes.KEY_SPACE,
     '\n': _ecodes.KEY_ENTER,
 }
@@ -51,7 +52,20 @@ class EvKeyBoard:
         for i in range(0, x_times):
             self.keyboard.write(_ecodes.EV_KEY, _ecodes.KEY_BACKSPACE, 1)
             self.keyboard.write(_ecodes.EV_KEY, _ecodes.KEY_BACKSPACE, 0)
-            self.keyboard.syn()
+        self.keyboard.syn()
+        self._writing = False
+
+    def type_key_codes(self, key_codes):
+        self._writing = True
+
+        self.down_letters.clear()
+
+        for key in key_codes:
+            # release if already held
+            self.keyboard.write(_ecodes.EV_KEY, key, 0)
+            self.keyboard.write(_ecodes.EV_KEY, key, 1)
+            self.keyboard.write(_ecodes.EV_KEY, key, 0)
+        self.keyboard.syn()
         self._writing = False
 
     def write(self, text: str):
@@ -64,7 +78,7 @@ class EvKeyBoard:
             self.keyboard.write(_ecodes.EV_KEY, key, 0)
 
         for char in text:
-            is_upper = char.isupper()
+            is_upper = char in _uppercase
             key = _char_to_key.get(char.lower())
 
             if key is None:
