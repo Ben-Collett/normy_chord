@@ -8,6 +8,7 @@ import threading
 import argparse
 import chord_parse
 from action_types import WriteAction, TypeAction, ActionList
+from conditionals import Conditional, LastCharTyped
 from config_utils import load_library
 
 
@@ -57,8 +58,22 @@ def exit_condition():
         exit()
 
 
+def _eval_conditions(conditionals: [Conditional]):
+    for conditional in conditionals:
+        if isinstance(conditional, LastCharTyped):
+            if keyboard.last_key_entered() != conditional.char_to_check:
+                return False
+
+    return True
+
+
 def _handle_actions(actions: ActionList):
     for action in actions:
+        if len(action.conditionals) != 0:
+            time.sleep(0.1)
+        if not _eval_conditions(action.conditionals):
+            continue
+
         if isinstance(action, WriteAction):
             keyboard.write(action.data)
         elif isinstance(action, TypeAction):

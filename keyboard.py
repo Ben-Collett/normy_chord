@@ -1,6 +1,7 @@
 import threading
 import evdev
 import string
+from utils.ring_buffer import RingBuffer
 _ecodes = evdev.ecodes
 
 _alphabet = frozenset(string.ascii_lowercase)
@@ -27,13 +28,15 @@ _char_to_key = {
     '0': _ecodes.KEY_0, '1': _ecodes.KEY_1, '2': _ecodes.KEY_2, '3': _ecodes.KEY_3,
     '4': _ecodes.KEY_4, '5': _ecodes.KEY_5, '6': _ecodes.KEY_6, '7': _ecodes.KEY_7,
     '8': _ecodes.KEY_8, '9': _ecodes.KEY_9, '_': _ecodes.KEY_MINUS,
-    ' ': _ecodes.KEY_SPACE,
+    ' ': _ecodes.KEY_SPACE, "'": _ecodes.KEY_APOSTROPHE,
     '\n': _ecodes.KEY_ENTER,
 }
 
+_key_to_char = {v: k for k, v in _char_to_key.items()}
+
 
 class EvKeyBoard:
-    def __init__(self, keyboard):
+    def __init__(self, keyboard, letter_buffer_size=50):
         self.down_letters = set()
         self.down_keys = set()
         self.meta_down = False
@@ -43,6 +46,7 @@ class EvKeyBoard:
         self.fn_down = False
         self.keyboard = keyboard
         self._writing = False
+        self.letter_buffer = RingBuffer(letter_buffer_size)
         listener_thread = threading.Thread(
             target=self.listen_keyboard, daemon=True)
         listener_thread.start()
@@ -54,6 +58,9 @@ class EvKeyBoard:
             self.keyboard.write(_ecodes.EV_KEY, _ecodes.KEY_BACKSPACE, 0)
         self.keyboard.syn()
         self._writing = False
+
+    def last_key_entered(self):
+        return self.letter_buffer.get_last()
 
     def type_key_codes(self, key_codes):
         self._writing = True
@@ -133,8 +140,23 @@ class EvKeyBoard:
             self.alt_down = key_code not in (e.KEY_LEFTALT, e.KEY_RIGHTALT)
             self.fn_down = key_code != e.KEY_FN
 
+    def update_key_buffer(self, event):
+        is_typabile_code = event.code in _key_to_char.keys()
+        key_down = event.value == 1
+        if key_down and is_typabile_code and _key_to_char[event.code] in _alphabet:
+            char: str = _key_to_char[event.code]
+            if self.shift_down:
+                char = char.upper()
+            self.letter_buffer.add(char)
+        elif event.code == _ecodes.KEY_SPACE and key_down:
+            self.letter_buffer.add(' ')
+        elif key_down and event.code == _ecodes.KEY_BACKSPACE:
+            self.letter_buffer.remove_last()
+
     def listen_keyboard(self):
         for event in self.keyboard.read_loop():
+            self.update_key_buffer(event)
+
             if event.type == _ecodes.EV_KEY and not self._writing:
                 key_code = _ecodes.KEY[event.code]
                 if event.value == 1:  # Key press

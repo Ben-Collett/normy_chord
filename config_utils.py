@@ -1,6 +1,7 @@
 import json
 from evdev import ecodes
 from action_types import WriteAction, TypeAction, ActionList
+from conditionals import LastCharTyped
 
 
 def write(input: str, if_conditional=None):
@@ -11,16 +12,12 @@ def type_keys(key_codes):
     return ActionList().and_then(TypeAction(key_codes))
 
 
-def backspace():
-    return ActionList().and_then(TypeAction([ecodes.KEY_BACKSPACE]))
-
-
-def just_chorded():
-    pass
+def backspace(conditionals=[]):
+    return ActionList().and_then(TypeAction([ecodes.KEY_BACKSPACE], conditionals))
 
 
 def last_character_entered_equals(char):
-    pass
+    return LastCharTyped(char)
 
 
 def exec(char):

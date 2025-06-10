@@ -3,8 +3,14 @@ keyboard = "/dev/input/event14"
 chords: dict = config_utils.load_library("./maps.json")
 
 chords.update({"as": config_utils.backspace()})
-print(chords)
-chord_keystroke_delay = 0
+
+just_spaced = config_utils.last_character_entered_equals(' ')
+backspace_on_space = config_utils.backspace(conditionals=[just_spaced])
+write_suffix = config_utils.write("'ll ")
+chords.update({"kl": backspace_on_space.and_then(write_suffix)})
+chords.update(
+    {"df": config_utils.backspace(conditionals=[just_spaced]).and_then(config_utils.write("'ll "))})
+
 separator = ' '
 
 """
@@ -17,4 +23,4 @@ or if you are going chord only I suppose it doesn't matter
 I recommend doing a couple typing test with monkey type to see which way you need to go
 
 """
-chord_detection_delay = 0.07
+chord_detection_delay = 0.06
