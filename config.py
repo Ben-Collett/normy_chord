@@ -1,4 +1,5 @@
 import config_utils
+from evdev import ecodes
 keyboard = "/dev/input/event14"
 chords: dict = config_utils.load_library("./maps.json")
 
@@ -10,6 +11,12 @@ write_suffix = config_utils.write("'ll ")
 chords.update({"kl": backspace_on_space.and_then(write_suffix)})
 chords.update(
     {"df": config_utils.backspace(conditionals=[just_spaced]).and_then(config_utils.write("'ll "))})
+
+
+write_parans = config_utils.write("()")
+move_cursor_left = config_utils.type_keys([ecodes.KEY_LEFT])
+chords.update({"jk": write_parans.and_then(move_cursor_left)})
+print(chords)
 
 separator = ' '
 
@@ -23,4 +30,4 @@ or if you are going chord only I suppose it doesn't matter
 I recommend doing a couple typing test with monkey type to see which way you need to go
 
 """
-chord_detection_delay = 0.06
+chord_detection_delay = 0.065

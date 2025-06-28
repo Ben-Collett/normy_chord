@@ -29,7 +29,7 @@ _char_to_key = {
     '4': _ecodes.KEY_4, '5': _ecodes.KEY_5, '6': _ecodes.KEY_6, '7': _ecodes.KEY_7,
     '8': _ecodes.KEY_8, '9': _ecodes.KEY_9, '_': _ecodes.KEY_MINUS,
     ' ': _ecodes.KEY_SPACE, "'": _ecodes.KEY_APOSTROPHE,
-    '\n': _ecodes.KEY_ENTER,
+    '\n': _ecodes.KEY_ENTER
 }
 
 _key_to_char = {v: k for k, v in _char_to_key.items()}
